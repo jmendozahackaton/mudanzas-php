@@ -1,28 +1,27 @@
 steps:
-  # Build the container image
   - name: 'gcr.io/cloud-builders/docker'
-    args: ['build', '-t', 'us-central1-docker.pkg.dev/$PROJECT_ID/cloud-run-source-deploy/mudanzas-php:$COMMIT_SHA', '.']
+    args: ['build', '-t', 'us-central1-docker.pkg.dev/$PROJECT_ID/cloud-run-source-deploy/mudanzas-php:latest', '.']
   
-  # Push the container image to Artifact Registry
   - name: 'gcr.io/cloud-builders/docker'
-    args: ['push', 'us-central1-docker.pkg.dev/$PROJECT_ID/cloud-run-source-deploy/mudanzas-php:$COMMIT_SHA']
+    args: ['push', 'us-central1-docker.pkg.dev/$PROJECT_ID/cloud-run-source-deploy/mudanzas-php:latest']
   
-  # Deploy container image to Cloud Run
   - name: 'gcr.io/cloud-builders/gcloud'
     args:
     - 'run'
     - 'deploy'
     - 'mudanzas-php'
     - '--image'
-    - 'us-central1-docker.pkg.dev/$PROJECT_ID/cloud-run-source-deploy/mudanzas-php:$COMMIT_SHA'
+    - 'us-central1-docker.pkg.dev/$PROJECT_ID/cloud-run-source-deploy/mudanzas-php:latest'
     - '--region'
     - 'us-central1'
     - '--platform'
     - 'managed'
     - '--allow-unauthenticated'
+    - '--set-secrets'
+    - 'DB_HOST=mudanzas-db-host:latest,DB_PASSWORD=mudanzas-db-password:latest,DB_USERNAME=mudanzas-db-username:latest'
 
 images:
-  - 'us-central1-docker.pkg.dev/$PROJECT_ID/cloud-run-source-deploy/mudanzas-php:$COMMIT_SHA'
+  - 'us-central1-docker.pkg.dev/$PROJECT_ID/cloud-run-source-deploy/mudanzas-php:latest'
 
 options:
   logging: CLOUD_LOGGING_ONLY
