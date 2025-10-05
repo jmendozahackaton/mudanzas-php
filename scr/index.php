@@ -1,24 +1,40 @@
 <?php
+require_once __DIR__ . '/config/database.php';
+
 header('Content-Type: application/json');
+header('Access-Control-Allow-Origin: *');
+header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
+header('Access-Control-Allow-Headers: Content-Type, Authorization');
 
-$requestUri = $_SERVER['REQUEST_URI'];
-$path = parse_url($requestUri, PHP_URL_PATH);
-
-if ($path === '/api/health' && $_SERVER['REQUEST_METHOD'] === 'GET') {
-    echo json_encode([
-        'status' => 'healthy',
-        'service' => 'API Mudanzas',
-        'timestamp' => date('Y-m-d H:i:s')
-    ]);
-    exit;
+if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+    http_response_code(200);
+    exit();
 }
 
-// Para cualquier otra ruta
-http_response_code(200);
-echo json_encode([
-    'status' => 'success',
-    'message' => 'API funcionando',
-    'endpoint' => $path,
-    'available' => '/api/health'
-]);
+try {
+    $database = new Database();
+    $db = $database->getConnection();
+    
+    // Prueba de conexión exitosa
+    if ($db) {
+        echo json_encode([
+            'status' => 'success',
+            'message' => '✅ API de Mudanzas funcionando correctamente',
+            'database' => 'Conexión a MySQL establecida satisfactoriamente',
+            'timestamp' => date('Y-m-d H:i:s'),
+            'endpoints' => [
+                'GET /' => 'Estado del sistema',
+                'GET /users' => 'Listar usuarios',
+                'POST /users' => 'Crear usuario'
+            ]
+        ]);
+    }
+} catch (Exception $e) {
+    http_response_code(500);
+    echo json_encode([
+        'status' => 'error',
+        'message' => 'Error de conexión a la base de datos',
+        'error' => $e->getMessage()
+    ]);
+}
 ?>

@@ -1,29 +1,30 @@
-# Usa la imagen base oficial de PHP 8.4 para Cloud Run
-FROM us-central1-docker.pkg.dev/serverless-runtimes/google-22-full/runtimes/php84:latest
+# Usar la imagen oficial de PHP con Apache
+FROM php:8.2-apache
 
-# Establecer el directorio de trabajo
-WORKDIR /app
+# Instalar extensiones de PHP necesarias
+RUN docker-php-ext-install mysqli pdo pdo_mysql
 
-# Copiar solo composer.json primero (sin composer.lock)
-COPY composer.json ./
+# Habilitar mod_rewrite para Apache
+RUN a2enmod rewrite
 
-# Instalar dependencias si composer.json existe
-RUN if [ -f "composer.json" ]; then composer install --no-dev --optimize-autoloader; fi
+# Copiar el código de la aplicación
+COPY . /var/www/html/
 
-# Copiar el resto del código de la aplicación
-COPY . .
+# Copiar configuración personalizada de Apache
+COPY ./apache-config.conf /etc/apache2/sites-available/000-default.conf
 
-# Crear directorio para logs
-RUN mkdir -p /var/log/php
-
-# Configurar PHP para producción
-RUN echo "memory_limit = 256M" >> /etc/php/8.4/cli/php.ini && \
-    echo "max_execution_time = 120" >> /etc/php/8.4/cli/php.ini && \
-    echo "display_errors = Off" >> /etc/php/8.4/cli/php.ini && \
-    echo "log_errors = On" >> /etc/php/8.4/cli/php.ini
+# Establecer permisos
+RUN chown -R www-data:www-data /var/www/html
 
 # Exponer el puerto
 EXPOSE 8080
 
-# Comando de inicio
-CMD ["php", "-S", "0.0.0.0:8080", "-t", "src"]
+# Cambiar el puerto por defecto de Apache
+RUN echo "ServerName localhost" >> /etc/apache2/apache2.conf
+RUN sed -i 's/80/8080/g' /etc/apache2/ports.conf
+RUN sed -i 's/80/8080/g' /etc/apache2/sites-available/000-default.conf
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+  CMD curl -f http://localhost:8080/ || exit 1
+  

@@ -1,13 +1,16 @@
 {
+    "name": "mudanzas-app/api",
+    "description": "API para plataforma de mudanzas",
+    "type": "project",
     "require": {
-        "php": "^8.4"
+        "php": ">=8.0"
     },
     "autoload": {
         "psr-4": {
             "App\\": "src/"
-        },
-        "files": [
-            "src/config/database.php"
-        ]
+        }
+    },
+    "config": {
+        "platform-check": false
     }
 }
