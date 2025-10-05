@@ -1,0 +1,47 @@
+{
+    "name": "mudanzas-app/api",
+    "description": "API para plataforma de mudanzas en Cloud Run",
+    "type": "project",
+    "require": {
+        "php": "^8.4",
+        "ext-pdo": "*",
+        "ext-json": "*",
+        "ext-mbstring": "*"
+    },
+    "require-dev": {
+        "google/cloud-tools": "^0.10.0",
+        "phpunit/phpunit": "^9.5"
+    },
+    "autoload": {
+        "psr-4": {
+            "App\\": "src/",
+            "App\\Config\\": "src/config/",
+            "App\\Controllers\\": "src/controllers/",
+            "App\\Models\\": "src/models/"
+        },
+        "files": [
+            "src/config/database.php",
+            "src/config/functions.php"
+        ]
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Tests\\": "tests/"
+        }
+    },
+    "scripts": {
+        "start": "php -S localhost:8080 -t src",
+        "test": "phpunit tests/",
+        "deploy": "gcloud run deploy api-mudanzas --source . --region us-central1 --allow-unauthenticated",
+        "deploy-prod": "gcloud run deploy api-mudanzas --source . --region us-central1 --set-secrets=DB_PASSWORD=password:latest"
+    },
+    "config": {
+        "platform": {
+            "php": "8.4"
+        },
+        "optimize-autoloader": true,
+        "sort-packages": true
+    },
+    "minimum-stability": "stable",
+    "prefer-stable": true
+}

@@ -1,0 +1,59 @@
+# Archivos de control de versiones
+.git
+.gitignore
+
+# Entornos de desarrollo
+.env
+.env.local
+.env.production
+.env.development
+
+# Archivos de IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Dependencias de Node.js (si usas herramientas frontend)
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Logs de aplicación
+logs/
+*.log
+php_error.log
+
+# Archivos de sistema y temporales
+.DS_Store
+Thumbs.db
+*.tmp
+*.temp
+
+# Archivos de cache
+.cache/
+*.cache
+
+# Backup files
+*.backup
+*.bak
+
+# Archivos de testing
+/tests/
+/phpunit.xml
+.coverage/
+
+# Documentación
+/docs/
+/README.md
+
+# Archivos grandes o innecesarios para producción
+/composer.phar
+/backups/
+/uploads/  # Si no necesitas subir archivos estáticos
+
+# Runtime data
+pids
+*.pid
+*.seed
