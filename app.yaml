@@ -1,46 +1,19 @@
-runtime: php
+runtime: custom
 env: flex
 
-runtime_config:
-  document_root: src
-  front_controller_file: index.php
-
-# Configuración de Cloud SQL
-beta_settings:
-  cloud_sql_instances: mudanzas-app-474101:us-central1:mudanzas-mysql
-
-# Variables de entorno
 env_variables:
+  JWT_SECRET: "tu_clave_secreta_muy_segura_cambiar_en_produccion"
   DB_HOST: ":/cloudsql/mudanzas-app-474101:us-central1:mudanzas-mysql"
   DB_NAME: "plataforma_mudanzas"
-  DB_USER: "jmendoza"  # Reemplaza con tu usuario real
-  # DB_PASSWORD se inyectará via Secret Manager
+  DB_USER: "jmendoza"
 
-# Configuración de recursos (igual a tu servicio existente)
+beta_settings:
+  cloud_sql_instances: "mudanzas-app-474101:us-central1:mudanzas-mysql"
+
 resources:
   cpu: 1000
   memory_gb: 0.5
 
-# Health checks
-readiness_check:
-  path: "/api/test"
-  timeout_seconds: 4
-  check_interval_seconds: 5
-  failure_threshold: 2
-  success_threshold: 2
-
-liveness_check:
-  path: "/api/test" 
-  timeout_seconds: 4
-  check_interval_seconds: 5
-  failure_threshold: 2
-  success_threshold: 2
-
-# Escalado automático
 automatic_scaling:
   min_num_instances: 1
-  max_num_instances: 3
-
-# Network
-network:
-  session_affinity: true
+  max_num_instances: 5
