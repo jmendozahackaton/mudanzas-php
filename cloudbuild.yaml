@@ -17,8 +17,6 @@ steps:
     - '--platform'
     - 'managed'
     - '--allow-unauthenticated'
-    - '--set-secrets'
-    - 'DB_HOST=mudanzas-db-host:latest,DB_PASSWORD=mudanzas-db-password:latest,DB_USERNAME=mudanzas-db-username:latest'
 
 images:
   - 'us-central1-docker.pkg.dev/$PROJECT_ID/cloud-run-source-deploy/mudanzas-php:latest'
