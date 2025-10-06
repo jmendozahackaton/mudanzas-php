@@ -18,7 +18,6 @@ steps:
     - 'managed'
     - '--allow-unauthenticated'
     - '--timeout=600s'
-    - '--startup-cpu-boost'
 
 images:
   - 'us-central1-docker.pkg.dev/$PROJECT_ID/cloud-run-source-deploy/mudanzas-php:latest'
