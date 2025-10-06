@@ -17,7 +17,9 @@ steps:
     - '--platform'
     - 'managed'
     - '--allow-unauthenticated'
-    - '--timeout=600s'
+    - '--timeout=900s'
+    - '--cpu=1'
+    - '--memory=1Gi'
 
 images:
   - 'us-central1-docker.pkg.dev/$PROJECT_ID/cloud-run-source-deploy/mudanzas-php:latest'
