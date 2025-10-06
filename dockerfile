@@ -14,8 +14,10 @@ RUN echo "ServerName localhost" >> /etc/apache2/apache2.conf
 RUN sed -i 's/80/8080/g' /etc/apache2/ports.conf
 RUN sed -i 's/80/8080/g' /etc/apache2/sites-available/000-default.conf
 
-# Configurar permisos
-RUN chown -R www-data:www-data /var/www/html
+# Configurar permisos CORREGIDOS
+RUN chown -R www-data:www-data /var/www/html \
+    && chmod -R 755 /var/www/html \
+    && chmod -R 644 /var/www/html/src/*.php
 
 # Crear archivo de inicio
 COPY start.sh /start.sh
