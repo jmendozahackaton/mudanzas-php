@@ -12,17 +12,15 @@ COPY . /var/www/html/
 # Configurar Apache para puerto 8080
 RUN echo "ServerName localhost" >> /etc/apache2/apache2.conf
 RUN sed -i 's/80/8080/g' /etc/apache2/ports.conf
-RUN sed -i 's/80/8080/g' /etc/apache2/sites-available/000-default.conf
 
-# Configurar permisos SIMPLIFICADOS
+# Copiar configuración de Apache
+COPY apache-config.conf /etc/apache2/sites-available/000-default.conf
+
+# Configurar permisos
 RUN chown -R www-data:www-data /var/www/html && chmod -R 755 /var/www/html
-
-# Crear archivo de inicio
-COPY start.sh /start.sh
-RUN chmod +x /start.sh
 
 # Puerto expuesto
 EXPOSE 8080
 
 # Comando de inicio simple
-CMD ["/start.sh"]
+CMD ["apache2-foreground"]
