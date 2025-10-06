@@ -53,6 +53,7 @@ Thumbs.db
 /backups/
 /uploads/  # Si no necesitas subir archivos estáticos
 
+
 # Runtime data
 pids
 *.pid
