@@ -50,4 +50,30 @@ class Database {
         return $this->conn;
     }
 }
+
+// Función de conexión global para compatibilidad
+function connectToDatabase() {
+    $database = new Database();
+    return $database->getConnection();
+}
+
+function checkDatabaseStatus() {
+    try {
+        $pdo = connectToDatabase();
+        $stmt = $pdo->query("SELECT NOW() as server_time, VERSION() as mysql_version");
+        $status = $stmt->fetch();
+        
+        return [
+            'status' => 'connected',
+            'server_time' => $status['server_time'],
+            'mysql_version' => $status['mysql_version']
+        ];
+    } catch (Exception $e) {
+        return [
+            'status' => 'error',
+            'message' => $e->getMessage()
+        ];
+    }
+}
+
 ?>
