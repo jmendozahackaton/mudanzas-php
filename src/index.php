@@ -1,18 +1,8 @@
 <?php
+// Cargar configuración básica
 require_once __DIR__ . '/config/database.php';
 require_once __DIR__ . '/config/cors.php';
 require_once __DIR__ . '/utils/Response.php';
-
-// Headers CORS
-header('Content-Type: application/json');
-header('Access-Control-Allow-Origin: *');
-header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
-header('Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With');
-
-if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
-    http_response_code(200);
-    exit();
-}
 
 // Router principal
 $requestUri = $_SERVER['REQUEST_URI'];
@@ -22,54 +12,75 @@ $method = $_SERVER['REQUEST_METHOD'];
 try {
     // Routing para las APIs
     switch (true) {
-        // Rutas de Usuario
-        case preg_match('#^/api/auth/register/?$#', $path) && $method === 'POST':
+        // Health check (importante para Cloud Run)
+        case $path === '/api/health' && $method === 'GET':
+            Response::json([
+                'status' => 'healthy',
+                'service' => 'API Mudanzas',
+                'timestamp' => date('Y-m-d H:i:s')
+            ]);
+            break;
+
+        // Auth endpoints
+        case $path === '/api/auth/register' && $method === 'POST':
             require_once __DIR__ . '/controllers/UserController.php';
-            $controller = new UserController();
+            $controller = new UserController($pdo);
             $controller->register();
             break;
 
-        case preg_match('#^/api/auth/login/?$#', $path) && $method === 'POST':
+        case $path === '/api/auth/login' && $method === 'POST':
             require_once __DIR__ . '/controllers/UserController.php';
-            $controller = new UserController();
+            $controller = new UserController($pdo);
             $controller->login();
             break;
 
-        case preg_match('#^/api/user/profile/?$#', $path) && $method === 'GET':
+        // User endpoints
+        case $path === '/api/user/profile' && $method === 'GET':
             require_once __DIR__ . '/controllers/UserController.php';
-            $controller = new UserController();
+            $controller = new UserController($pdo);
             $controller->getProfile();
             break;
 
-        case preg_match('#^/api/user/profile/?$#', $path) && $method === 'PUT':
+        case $path === '/api/user/profile' && $method === 'PUT':
             require_once __DIR__ . '/controllers/UserController.php';
-            $controller = new UserController();
+            $controller = new UserController($pdo);
             $controller->updateProfile();
             break;
 
-        case preg_match('#^/api/admin/users/?$#', $path) && $method === 'GET':
+        // Admin endpoints
+        case $path === '/api/admin/users' && $method === 'GET':
             require_once __DIR__ . '/controllers/UserController.php';
-            $controller = new UserController();
+            $controller = new UserController($pdo);
             $controller->listUsers();
             break;
 
-        case preg_match('#^/api/admin/users/status/?$#', $path) && $method === 'PUT':
+        case $path === '/api/admin/users/status' && $method === 'PUT':
             require_once __DIR__ . '/controllers/UserController.php';
-            $controller = new UserController();
+            $controller = new UserController($pdo);
             $controller->changeUserStatus();
             break;
 
-        case preg_match('#^/api/admin/users/role/?$#', $path) && $method === 'PUT':
+        case $path === '/api/admin/users/role' && $method === 'PUT':
             require_once __DIR__ . '/controllers/UserController.php';
-            $controller = new UserController();
+            $controller = new UserController($pdo);
             $controller->changeUserRole();
             break;
 
+        // Test endpoint
+        case $path === '/api/test' && $method === 'GET':
+            Response::success('API funcionando correctamente', [
+                'service' => 'Mudanzas API',
+                'version' => '1.0',
+                'timestamp' => date('Y-m-d H:i:s')
+            ]);
+            break;
+
+        // Default - Endpoint not found
         default:
-            Response::error('Endpoint no encontrado', 404);
+            Response::error('Endpoint no encontrado: ' . $path, 404);
     }
 } catch (Exception $e) {
     error_log("Error en router: " . $e->getMessage());
-    Response::error('Error interno del servidor', 500);
+    Response::error('Error interno del servidor: ' . $e->getMessage(), 500);
 }
 ?>
