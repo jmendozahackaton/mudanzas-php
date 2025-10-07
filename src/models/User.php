@@ -1,41 +1,115 @@
 <?php
 class User {
-    private $conn;
-    private $table_name = "users";
+    private $pdo;
 
-    public $id;
-    public $name;
-    public $email;
-    public $created_at;
-
-    public function __construct($db) {
-        $this->conn = $db;
+    public function __construct($pdo) {
+        $this->pdo = $pdo;
     }
 
-    // Método para probar la conexión y estructura
-    public function testConnection() {
-        try {
-            $query = "SELECT 1 as test";
-            $stmt = $this->conn->prepare($query);
-            $stmt->execute();
-            return $stmt->fetch();
-        } catch (Exception $e) {
-            throw new Exception("Error en test de conexión: " . $e->getMessage());
+    // Crear usuario
+    public function create($userData) {
+        $sql = "INSERT INTO usuarios (
+            uuid, nombre, apellido, email, telefono, password_hash, 
+            fecha_registro, estado, rol
+        ) VALUES (?, ?, ?, ?, ?, ?, NOW(), 'activo', 'usuario')";
+
+        $stmt = $this->pdo->prepare($sql);
+        $uuid = uniqid('user_', true);
+        
+        $stmt->execute([
+            $uuid,
+            $userData['nombre'],
+            $userData['apellido'],
+            $userData['email'],
+            $userData['telefono'] ?? null,
+            $userData['password_hash']
+        ]);
+
+        return $this->findByEmail($userData['email']);
+    }
+
+    // Buscar por email
+    public function findByEmail($email) {
+        $sql = "SELECT * FROM usuarios WHERE email = ? AND estado = 'activo'";
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute([$email]);
+        return $stmt->fetch(PDO::FETCH_ASSOC);
+    }
+
+    // Buscar por ID
+    public function findById($id) {
+        $sql = "SELECT id, uuid, nombre, apellido, email, telefono, foto_perfil, fecha_registro, ultimo_acceso, estado, rol 
+                FROM usuarios WHERE id = ?";
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute([$id]);
+        return $stmt->fetch(PDO::FETCH_ASSOC);
+    }
+
+    // Actualizar perfil
+    public function update($id, $userData) {
+        $allowedFields = ['nombre', 'apellido', 'email', 'telefono', 'password_hash', 'foto_perfil'];
+        $updates = [];
+        $params = [];
+
+        foreach ($userData as $field => $value) {
+            if (in_array($field, $allowedFields) && $value !== null) {
+                $updates[] = "$field = ?";
+                $params[] = $value;
+            }
         }
+
+        if (empty($updates)) {
+            return false;
+        }
+
+        $params[] = $id;
+        $sql = "UPDATE usuarios SET " . implode(', ', $updates) . " WHERE id = ?";
+        $stmt = $this->pdo->prepare($sql);
+        return $stmt->execute($params);
     }
 
-    // Crear tabla de usuarios si no existe (para pruebas)
-    public function createTableIfNotExists() {
-        $query = "
-        CREATE TABLE IF NOT EXISTS " . $this->table_name . " (
-            id INT AUTO_INCREMENT PRIMARY KEY,
-            name VARCHAR(100) NOT NULL,
-            email VARCHAR(100) UNIQUE NOT NULL,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-        )";
+    // Listar usuarios (para admin)
+    public function getAll($page = 1, $limit = 10) {
+        $offset = ($page - 1) * $limit;
+        
+        $sql = "SELECT id, uuid, nombre, apellido, email, telefono, foto_perfil, 
+                       fecha_registro, ultimo_acceso, estado, rol 
+                FROM usuarios 
+                ORDER BY fecha_registro DESC 
+                LIMIT ? OFFSET ?";
+        
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute([$limit, $offset]);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
 
-        $stmt = $this->conn->prepare($query);
-        return $stmt->execute();
+    // Contar total de usuarios
+    public function count() {
+        $sql = "SELECT COUNT(*) as total FROM usuarios";
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute();
+        return $stmt->fetch(PDO::FETCH_ASSOC)['total'];
+    }
+
+    // Actualizar último acceso
+    public function updateLastAccess($id) {
+        $sql = "UPDATE usuarios SET ultimo_acceso = NOW() WHERE id = ?";
+        $stmt = $this->pdo->prepare($sql);
+        return $stmt->execute([$id]);
+    }
+
+    // Cambiar estado de usuario (admin)
+    public function changeStatus($id, $status) {
+        $sql = "UPDATE usuarios SET estado = ? WHERE id = ?";
+        $stmt = $this->pdo->prepare($sql);
+        return $stmt->execute([$status, $id]);
+    }
+
+    // Cambiar rol de usuario (admin)
+    public function changeRole($id, $role) {
+        $sql = "UPDATE usuarios SET rol = ? WHERE id = ?";
+        $stmt = $this->pdo->prepare($sql);
+        return $stmt->execute([$role, $id]);
     }
 }
 ?>
