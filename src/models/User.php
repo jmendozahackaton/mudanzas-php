@@ -11,7 +11,7 @@ class User {
         $sql = "INSERT INTO usuarios (
             uuid, nombre, apellido, email, telefono, password_hash, 
             fecha_registro, estado, rol
-        ) VALUES (?, ?, ?, ?, ?, ?, NOW(), 'activo', 'usuario')";
+        ) VALUES (?, ?, ?, ?, ?, ?, NOW(), 'activo', 'cliente')";
 
         $stmt = $this->pdo->prepare($sql);
         $uuid = uniqid('user_', true);
