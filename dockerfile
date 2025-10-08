@@ -1,26 +1,30 @@
-FROM php:8.2-apache
+# Usa la imagen base oficial de PHP 8.4 para Cloud Run
+FROM us-central1-docker.pkg.dev/serverless-runtimes/google-22-full/runtimes/php84:latest
 
-# Instalar extensiones PHP necesarias
-RUN docker-php-ext-install mysqli pdo pdo_mysql
+# Establecer el directorio de trabajo
+WORKDIR /app
 
-# Habilitar mod_rewrite
-RUN a2enmod rewrite
+# Copiar archivos de configuración
+COPY composer.json composer.lock ./
 
-# Copiar archivos de la aplicación
-COPY . /var/www/html/
+# Instalar dependencias de PHP
+RUN composer install --no-dev --optimize-autoloader --no-scripts
 
-# Configurar Apache para puerto 8080
-RUN echo "ServerName localhost" >> /etc/apache2/apache2.conf
-RUN sed -i 's/80/8080/g' /etc/apache2/ports.conf
+# Copiar el resto del código de la aplicación
+COPY . .
 
-# Copiar configuración de Apache
-COPY apache-config.conf /etc/apache2/sites-available/000-default.conf
+# Configurar PHP
+RUN echo 'memory_limit = 256M' >> /etc/php/8.4/cli/php.ini && \
+    echo 'max_execution_time = 120' >> /etc/php/8.4/cli/php.ini && \
+    echo 'display_errors = Off' >> /etc/php/8.4/cli/php.ini && \
+    echo 'log_errors = On' >> /etc/php/8.4/cli/php.ini
 
-# Configurar permisos
-RUN chown -R www-data:www-data /var/www/html && chmod -R 755 /var/www/html
-
-# Puerto expuesto
+# Exponer el puerto
 EXPOSE 8080
 
-# Comando de inicio simple
-CMD ["apache2-foreground"]
+# Health check
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+    CMD curl -f http://localhost:8080/api/health || exit 1
+
+# Comando para iniciar servidor PHP integrado (sin Apache)
+CMD ["php", "-S", "0.0.0.0:8080", "-t", "src"]

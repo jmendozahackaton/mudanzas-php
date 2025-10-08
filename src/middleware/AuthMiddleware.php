@@ -7,61 +7,40 @@ class AuthMiddleware {
 
         error_log("=== INICIANDO AUTENTICACIÓN ===");
 
-        // Método 1: Headers normales
+        // Para servidor PHP integrado, los headers vienen en $_SERVER
         $headers = getallheaders();
-        error_log("Headers disponibles: " . json_encode(array_keys($headers)));
+        error_log("Todos los headers: " . json_encode($headers));
 
+        // Método principal: Header Authorization
         if (isset($headers['Authorization'])) {
             $authHeader = $headers['Authorization'];
-            error_log("Header Authorization encontrado: " . $authHeader);
+            error_log("Authorization header: " . $authHeader);
             
             if (preg_match('/Bearer\s+(.*)$/i', $authHeader, $matches)) {
                 $token = $matches[1];
-                error_log("Token extraído de Authorization: " . substr($token, 0, 30) . "...");
+                error_log("✅ Token extraído: " . substr($token, 0, 30) . "...");
             }
         }
 
-        // Método 2: $_SERVER['HTTP_AUTHORIZATION'] (cuando Apache lo pasa)
-        if (!$token && isset($_SERVER['HTTP_AUTHORIZATION'])) {
-            $authHeader = $_SERVER['HTTP_AUTHORIZATION'];
-            error_log("HTTP_AUTHORIZATION encontrado: " . $authHeader);
-            
-            if (preg_match('/Bearer\s+(.*)$/i', $authHeader, $matches)) {
-                $token = $matches[1];
-                error_log("Token extraído de HTTP_AUTHORIZATION: " . substr($token, 0, 30) . "...");
-            }
-        }
-
-        // Método 3: $_SERVER['REDIRECT_HTTP_AUTHORIZATION'] (alternativa)
-        if (!$token && isset($_SERVER['REDIRECT_HTTP_AUTHORIZATION'])) {
-            $authHeader = $_SERVER['REDIRECT_HTTP_AUTHORIZATION'];
-            error_log("REDIRECT_HTTP_AUTHORIZATION encontrado: " . $authHeader);
-            
-            if (preg_match('/Bearer\s+(.*)$/i', $authHeader, $matches)) {
-                $token = $matches[1];
-                error_log("Token extraído de REDIRECT_HTTP_AUTHORIZATION: " . substr($token, 0, 30) . "...");
-            }
-        }
-
-        // Método 4: apache_request_headers() como fallback
-        if (!$token && function_exists('apache_request_headers')) {
-            $apacheHeaders = apache_request_headers();
-            error_log("Apache headers: " . json_encode(array_keys($apacheHeaders)));
-            
-            if (isset($apacheHeaders['Authorization'])) {
-                $authHeader = $apacheHeaders['Authorization'];
-                error_log("Authorization de apache_request_headers: " . $authHeader);
-                
-                if (preg_match('/Bearer\s+(.*)$/i', $authHeader, $matches)) {
-                    $token = $matches[1];
-                    error_log("Token extraído de apache headers: " . substr($token, 0, 30) . "...");
+        // Método alternativo: Desde $_SERVER (cuando viene en minúsculas)
+        if (!$token) {
+            foreach ($_SERVER as $key => $value) {
+                if (strtoupper($key) === 'HTTP_AUTHORIZATION') {
+                    $authHeader = $value;
+                    error_log("HTTP_AUTHORIZATION from _SERVER: " . $authHeader);
+                    
+                    if (preg_match('/Bearer\s+(.*)$/i', $authHeader, $matches)) {
+                        $token = $matches[1];
+                        error_log("✅ Token extraído de _SERVER: " . substr($token, 0, 30) . "...");
+                        break;
+                    }
                 }
             }
         }
 
         if (!$token) {
-            error_log("❌ No se encontró token en ninguna fuente");
-            error_log("$_SERVER keys: " . json_encode(array_keys($_SERVER)));
+            error_log("❌ No token found in any source");
+            error_log("Available _SERVER keys: " . implode(', ', array_keys($_SERVER)));
             http_response_code(401);
             echo json_encode(['error' => 'Token de acceso requerido']);
             exit;
@@ -69,13 +48,13 @@ class AuthMiddleware {
 
         $payload = JWT::verify($token);
         if (!$payload) {
-            error_log("❌ Verificación de token fallida");
+            error_log("❌ Token verification failed");
             http_response_code(401);
             echo json_encode(['error' => 'Token inválido o expirado']);
             exit;
         }
 
-        error_log("✅ Autenticación exitosa para: " . $payload['email']);
+        error_log("✅ Authentication successful for: " . $payload['email']);
         return $payload;
     }
 }
