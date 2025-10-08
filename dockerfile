@@ -7,10 +7,6 @@ WORKDIR /app
 # Copiar todo el código
 COPY . .
 
-# Configurar PHP básico
-RUN echo "memory_limit = 256M" >> /etc/php/8.4/cli/php.ini && \
-    echo "max_execution_time = 120" >> /etc/php/8.4/cli/php.ini
-
 # Exponer el puerto
 EXPOSE 8080
 
