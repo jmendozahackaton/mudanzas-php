@@ -127,5 +127,82 @@ class User {
         $stmt = $this->pdo->prepare($sql);
         return $stmt->execute([$role, $id]);
     }
+
+    // Buscar usuarios
+    public function search($searchTerm, $page = 1, $limit = 10) {
+        $offset = ($page - 1) * $limit;
+        
+        $sql = "SELECT id, uuid, nombre, apellido, email, telefono, foto_perfil, 
+                       fecha_registro, ultimo_acceso, estado, rol 
+                FROM usuarios 
+                WHERE nombre LIKE ? OR apellido LIKE ? OR email LIKE ? OR telefono LIKE ?
+                ORDER BY fecha_registro DESC 
+                LIMIT :limit OFFSET :offset";
+        
+        $stmt = $this->pdo->prepare($sql);
+        $searchPattern = "%$searchTerm%";
+        
+        $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
+        $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
+        $stmt->execute([$searchPattern, $searchPattern, $searchPattern, $searchPattern]);
+        
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    // Contar resultados de búsqueda
+    public function countSearch($searchTerm) {
+        $sql = "SELECT COUNT(*) as total FROM usuarios 
+                WHERE nombre LIKE ? OR apellido LIKE ? OR email LIKE ? OR telefono LIKE ?";
+        
+        $stmt = $this->pdo->prepare($sql);
+        $searchPattern = "%$searchTerm%";
+        $stmt->execute([$searchPattern, $searchPattern, $searchPattern, $searchPattern]);
+        
+        return $stmt->fetch(PDO::FETCH_ASSOC)['total'];
+    }
+
+    // Obtener usuario por ID
+    public function getById($id) {
+        $sql = "SELECT id, uuid, nombre, apellido, email, telefono, foto_perfil, 
+                       fecha_registro, ultimo_acceso, estado, rol 
+                FROM usuarios 
+                WHERE id = ?";
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute([$id]);
+        return $stmt->fetch(PDO::FETCH_ASSOC);
+    }
+
+    // Obtener usuario por email
+    public function getByEmail($email) {
+        $sql = "SELECT id FROM usuarios WHERE email = ?";
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute([$email]);
+        return $stmt->fetch(PDO::FETCH_ASSOC);
+    }
+
+    // Actualizar perfil de usuario
+    public function updateProfile($userId, $data) {
+        $allowedFields = ['nombre', 'apellido', 'email', 'telefono', 'rol', 'estado'];
+        $setParts = [];
+        $params = [];
+
+        foreach ($data as $field => $value) {
+            if (in_array($field, $allowedFields)) {
+                $setParts[] = "$field = ?";
+                $params[] = $value;
+            }
+        }
+
+        if (empty($setParts)) {
+            return false;
+        }
+
+        $params[] = $userId; // Para el WHERE
+
+        $sql = "UPDATE usuarios SET " . implode(', ', $setParts) . " WHERE id = ?";
+        $stmt = $this->pdo->prepare($sql);
+        return $stmt->execute($params);
+    }
+
 }
 ?>

@@ -207,5 +207,108 @@ class UserController {
             Response::error('Error al actualizar el rol', 500);
         }
     }
+
+    // 8. Buscar usuarios (Admin)
+    public function searchUsers() {
+        $admin = AdminMiddleware::check();
+        
+        $search = $_GET['q'] ?? '';
+        $page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
+        $limit = isset($_GET['limit']) ? (int)$_GET['limit'] : 10;
+
+        if (empty($search)) {
+            Response::error('Término de búsqueda requerido', 400);
+        }
+
+        $users = $this->userModel->search($search, $page, $limit);
+        $total = $this->userModel->countSearch($search);
+
+        Response::success('Resultados de búsqueda', [
+            'users' => $users,
+            'pagination' => [
+                'page' => $page,
+                'limit' => $limit,
+                'total' => (int)$total,
+                'pages' => ceil($total / $limit)
+            ],
+            'search_term' => $search
+        ]);
+    }
+
+    // 9. Actualizar perfil de usuario (Admin)
+    public function updateUserProfile() {
+        $admin = AdminMiddleware::check();
+        $input = json_decode(file_get_contents('php://input'), true);
+
+        // Validaciones
+        if (empty($input['user_id'])) {
+            Response::error('user_id es requerido', 400);
+        }
+
+        if (empty($input['nombre']) || empty($input['apellido']) || empty($input['email'])) {
+            Response::error('nombre, apellido y email son requeridos', 400);
+        }
+
+        // Verificar que el usuario existe
+        $existingUser = $this->userModel->getById($input['user_id']);
+        if (!$existingUser) {
+            Response::error('Usuario no encontrado', 404);
+        }
+
+        // Verificar que el email no esté en uso por otro usuario
+        if ($input['email'] !== $existingUser['email']) {
+            $emailExists = $this->userModel->getByEmail($input['email']);
+            if ($emailExists) {
+                Response::error('El email ya está en uso por otro usuario', 400);
+            }
+        }
+
+        // Preparar datos para actualización
+        $updateData = [
+            'nombre' => $input['nombre'],
+            'apellido' => $input['apellido'],
+            'email' => $input['email'],
+            'telefono' => $input['telefono'] ?? null,
+        ];
+
+        // Opcional: Permitir actualizar rol y estado si se envían
+        if (isset($input['rol'])) {
+            $updateData['rol'] = $input['rol'];
+        }
+        if (isset($input['estado'])) {
+            $updateData['estado'] = $input['estado'];
+        }
+
+        // Actualizar en la base de datos
+        if ($this->userModel->updateProfile($input['user_id'], $updateData)) {
+            // Obtener usuario actualizado
+            $updatedUser = $this->userModel->getById($input['user_id']);
+            Response::success('Perfil actualizado correctamente', [
+                'user' => $updatedUser
+            ]);
+        } else {
+            Response::error('Error al actualizar el perfil', 500);
+        }
+    }
+
+    // 10. Obtener usuario específico por ID (Admin)
+    public function getUserById() {
+        $admin = AdminMiddleware::check();
+        
+        $userId = $_GET['id'] ?? null;
+        if (empty($userId)) {
+            Response::error('ID de usuario requerido', 400);
+        }
+
+        $user = $this->userModel->getById($userId);
+        if (!$user) {
+            Response::error('Usuario no encontrado', 404);
+        }
+
+        Response::success('Usuario encontrado', [
+            'user' => $user
+        ]);
+    }
+
 }
 ?>

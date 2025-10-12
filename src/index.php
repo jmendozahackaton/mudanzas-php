@@ -63,7 +63,7 @@ try {
             $controller->getProfile();
             break;
 
-        case $path === '/api/user/profile' && $method === 'PUT':  // ✅ AGREGADO
+        case $path === '/api/user/profile' && $method === 'PUT':
             if (!$pdo) Response::error('Servicio no disponible', 503);
             require_once __DIR__ . '/controllers/UserController.php';
             $controller = new UserController($pdo);
@@ -78,18 +78,42 @@ try {
             $controller->listUsers();
             break;
 
-        case $path === '/api/admin/users/status' && $method === 'PUT':  // ✅ AGREGADO
+        case $path === '/api/admin/users/status' && $method === 'PUT':
             if (!$pdo) Response::error('Servicio no disponible', 503);
             require_once __DIR__ . '/controllers/UserController.php';
             $controller = new UserController($pdo);
             $controller->changeUserStatus();
             break;
 
-        case $path === '/api/admin/users/role' && $method === 'PUT':  // ✅ AGREGADO
+        case $path === '/api/admin/users/role' && $method === 'PUT':
             if (!$pdo) Response::error('Servicio no disponible', 503);
             require_once __DIR__ . '/controllers/UserController.php';
             $controller = new UserController($pdo);
             $controller->changeUserRole();
+            break;
+
+        // Búsqueda de usuarios
+        case $path === '/api/admin/users/search' && $method === 'GET':
+            if (!$pdo) Response::error('Servicio no disponible', 503);
+            require_once __DIR__ . '/controllers/UserController.php';
+            $controller = new UserController($pdo);
+            $controller->searchUsers();
+            break;
+
+        // Obtener usuario específico
+        case $path === '/api/admin/users/single' && $method === 'GET':
+            if (!$pdo) Response::error('Servicio no disponible', 503);
+            require_once __DIR__ . '/controllers/UserController.php';
+            $controller = new UserController($pdo);
+            $controller->getUserById();
+            break;
+
+        // Actualizar perfil de usuario (admin)
+        case $path === '/api/admin/users/profile' && $method === 'PUT':
+            if (!$pdo) Response::error('Servicio no disponible', 503);
+            require_once __DIR__ . '/controllers/UserController.php';
+            $controller = new UserController($pdo);
+            $controller->updateUserProfile();
             break;
 
         // ==================== DEFAULT ====================
