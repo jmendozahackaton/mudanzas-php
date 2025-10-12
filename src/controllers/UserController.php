@@ -142,9 +142,18 @@ class UserController {
     public function listUsers() {
         $admin = AdminMiddleware::check();
         
+        // ✅ LOG PARA DEBUG
+        error_log("🎯 Parámetros recibidos:");
+        error_log("🎯 page: " . ($_GET['page'] ?? 'no definido'));
+        error_log("🎯 limit: " . ($_GET['limit'] ?? 'no definido'));
+
         // ✅ CONVERTIR EXPLÍCITAMENTE A ENTEROS
         $page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
         $limit = isset($_GET['limit']) ? (int)$_GET['limit'] : 10;
+
+        error_log("🎯 Parámetros convertidos:");
+        error_log("🎯 page (int): $page");
+        error_log("🎯 limit (int): $limit");
 
         // ✅ VALIDAR QUE LOS VALORES SEAN POSITIVOS
         if ($page < 1) $page = 1;
