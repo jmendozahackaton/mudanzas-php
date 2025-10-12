@@ -77,21 +77,25 @@ class User {
         $offset = ($page - 1) * $limit;
         
         error_log("📊 SQL - LIMIT: $limit, OFFSET: $offset"); // Para debug
-
-        error_log("🎯 Tipo de datos:");
-        error_log("🎯 limit type: " . gettype($limit));
-        error_log("🎯 offset type: " . gettype($offset));
         
         $sql = "SELECT id, uuid, nombre, apellido, email, telefono, foto_perfil, 
                     fecha_registro, ultimo_acceso, estado, rol 
                 FROM usuarios 
                 ORDER BY fecha_registro DESC 
-                LIMIT ? OFFSET ?";
-
+                LIMIT :limit OFFSET :offset";
+        
+        $stmt = $this->pdo->prepare($sql);
+        
+        // ✅ ESPECIFICAR EXPLÍCITAMENTE EL TIPO DE DATO
+        $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
+        $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
+        
+        error_log("🎯 Tipo de datos:");
+        error_log("🎯 limit type: " . gettype($limit));
+        error_log("🎯 offset type: " . gettype($offset));
         error_log("🎯 SQL final: " . $sql);
 
-        $stmt = $this->pdo->prepare($sql);
-        $stmt->execute([$limit, $offset]);
+        $stmt->execute();
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
