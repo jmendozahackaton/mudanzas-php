@@ -70,10 +70,16 @@ class User {
 
     // Listar usuarios (para admin)
     public function getAll($page = 1, $limit = 10) {
+        // ✅ ASEGURAR QUE SON ENTEROS
+        $page = (int)$page;
+        $limit = (int)$limit;
+        
         $offset = ($page - 1) * $limit;
         
+        error_log("📊 SQL - LIMIT: $limit, OFFSET: $offset"); // Para debug
+        
         $sql = "SELECT id, uuid, nombre, apellido, email, telefono, foto_perfil, 
-                       fecha_registro, ultimo_acceso, estado, rol 
+                    fecha_registro, ultimo_acceso, estado, rol 
                 FROM usuarios 
                 ORDER BY fecha_registro DESC 
                 LIMIT ? OFFSET ?";

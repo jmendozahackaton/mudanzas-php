@@ -141,8 +141,17 @@ class UserController {
     // 5. Listar usuarios (Admin)
     public function listUsers() {
         $admin = AdminMiddleware::check();
-        $page = $_GET['page'] ?? 1;
-        $limit = $_GET['limit'] ?? 10;
+        
+        // ✅ CONVERTIR EXPLÍCITAMENTE A ENTEROS
+        $page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
+        $limit = isset($_GET['limit']) ? (int)$_GET['limit'] : 10;
+
+        // ✅ VALIDAR QUE LOS VALORES SEAN POSITIVOS
+        if ($page < 1) $page = 1;
+        if ($limit < 1) $limit = 10;
+        if ($limit > 100) $limit = 100; // Límite máximo
+
+        error_log("📊 ListUsers - page: $page, limit: $limit"); // Para debug
 
         $users = $this->userModel->getAll($page, $limit);
         $total = $this->userModel->count();
@@ -150,8 +159,8 @@ class UserController {
         Response::success('Lista de usuarios', [
             'users' => $users,
             'pagination' => [
-                'page' => (int)$page,
-                'limit' => (int)$limit,
+                'page' => $page,
+                'limit' => $limit,
                 'total' => (int)$total,
                 'pages' => ceil($total / $limit)
             ]
