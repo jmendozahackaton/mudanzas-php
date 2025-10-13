@@ -133,18 +133,24 @@ class User {
         $offset = ($page - 1) * $limit;
         
         $sql = "SELECT id, uuid, nombre, apellido, email, telefono, foto_perfil, 
-                       fecha_registro, ultimo_acceso, estado, rol 
+                    fecha_registro, ultimo_acceso, estado, rol 
                 FROM usuarios 
                 WHERE nombre LIKE ? OR apellido LIKE ? OR email LIKE ? OR telefono LIKE ?
                 ORDER BY fecha_registro DESC 
-                LIMIT :limit OFFSET :offset";
+                LIMIT ? OFFSET ?";  // ← Cambiar a parámetros posicionales
         
         $stmt = $this->pdo->prepare($sql);
         $searchPattern = "%$searchTerm%";
         
-        $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
-        $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
-        $stmt->execute([$searchPattern, $searchPattern, $searchPattern, $searchPattern]);
+        // Pasar todos los parámetros en el execute
+        $stmt->execute([
+            $searchPattern, 
+            $searchPattern, 
+            $searchPattern, 
+            $searchPattern,
+            $limit,
+            $offset
+        ]);
         
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
