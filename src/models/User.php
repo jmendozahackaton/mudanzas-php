@@ -137,20 +137,20 @@ class User {
                 FROM usuarios 
                 WHERE nombre LIKE ? OR apellido LIKE ? OR email LIKE ? OR telefono LIKE ?
                 ORDER BY fecha_registro DESC 
-                LIMIT ? OFFSET ?";  // ← Cambiar a parámetros posicionales
+                LIMIT ? OFFSET ?";
         
         $stmt = $this->pdo->prepare($sql);
         $searchPattern = "%$searchTerm%";
         
-        // Pasar todos los parámetros en el execute
-        $stmt->execute([
-            $searchPattern, 
-            $searchPattern, 
-            $searchPattern, 
-            $searchPattern,
-            $limit,
-            $offset
-        ]);
+        // Bind de todos los parámetros
+        $stmt->bindValue(1, $searchPattern);
+        $stmt->bindValue(2, $searchPattern);
+        $stmt->bindValue(3, $searchPattern);
+        $stmt->bindValue(4, $searchPattern);
+        $stmt->bindValue(5, $limit, PDO::PARAM_INT);    // ← Especificar que es INT
+        $stmt->bindValue(6, $offset, PDO::PARAM_INT);   // ← Especificar que es INT
+        
+        $stmt->execute();
         
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
