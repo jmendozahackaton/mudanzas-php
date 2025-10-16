@@ -210,5 +210,21 @@ class User {
         return $stmt->execute($params);
     }
 
+    // Obtener cliente por ID de usuario
+    public function getClienteByUserId($userId) {
+        $sql = "SELECT c.* FROM clientes c WHERE c.usuario_id = ?";
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute([$userId]);
+        return $stmt->fetch(PDO::FETCH_ASSOC);
+    }
+
+    // Obtener proveedor por ID de usuario
+    public function getProveedorByUserId($userId) {
+        $sql = "SELECT p.* FROM proveedores p WHERE p.usuario_id = ?";
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute([$userId]);
+        return $stmt->fetch(PDO::FETCH_ASSOC);
+    }
+
 }
 ?>

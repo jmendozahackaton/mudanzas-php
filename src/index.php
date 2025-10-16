@@ -116,6 +116,114 @@ try {
             $controller->updateUserProfile();
             break;
 
+        // ==================== PROVEEDOR ENDPOINTS ====================
+        case $path === '/api/provider/register' && $method === 'POST':
+            if (!$pdo) Response::error('Servicio no disponible', 503);
+            require_once __DIR__ . '/controllers/ProviderController.php';
+            $controller = new ProviderController($pdo);
+            $controller->register();
+            break;
+
+        case $path === '/api/provider/profile' && $method === 'GET':
+            if (!$pdo) Response::error('Servicio no disponible', 503);
+            require_once __DIR__ . '/controllers/ProviderController.php';
+            $controller = new ProviderController($pdo);
+            $controller->getProfile();
+            break;
+
+        case $path === '/api/provider/profile' && $method === 'PUT':
+            if (!$pdo) Response::error('Servicio no disponible', 503);
+            require_once __DIR__ . '/controllers/ProviderController.php';
+            $controller = new ProviderController($pdo);
+            $controller->updateProfile();
+            break;
+
+        case $path === '/api/provider/availability' && $method === 'PUT':
+            if (!$pdo) Response::error('Servicio no disponible', 503);
+            require_once __DIR__ . '/controllers/ProviderController.php';
+            $controller = new ProviderController($pdo);
+            $controller->updateAvailability();
+            break;
+
+        case $path === '/api/provider/location' && $method === 'PUT':
+            if (!$pdo) Response::error('Servicio no disponible', 503);
+            require_once __DIR__ . '/controllers/ProviderController.php';
+            $controller = new ProviderController($pdo);
+            $controller->updateLocation();
+            break;
+
+        case $path === '/api/provider/statistics' && $method === 'GET':
+            if (!$pdo) Response::error('Servicio no disponible', 503);
+            require_once __DIR__ . '/controllers/ProviderController.php';
+            $controller = new ProviderController($pdo);
+            $controller->getStatistics();
+            break;
+
+        // ==================== MUDANZA ENDPOINTS ====================
+        case $path === '/api/moving/request' && $method === 'POST':
+            if (!$pdo) Response::error('Servicio no disponible', 503);
+            require_once __DIR__ . '/controllers/MovingController.php';
+            $controller = new MovingController($pdo);
+            $controller->createRequest();
+            break;
+
+        case $path === '/api/moving/requests' && $method === 'GET':
+            if (!$pdo) Response::error('Servicio no disponible', 503);
+            require_once __DIR__ . '/controllers/MovingController.php';
+            $controller = new MovingController($pdo);
+            $controller->getClientRequests();
+            break;
+
+        case $path === '/api/moving/movings' && $method === 'GET':
+            if (!$pdo) Response::error('Servicio no disponible', 503);
+            require_once __DIR__ . '/controllers/MovingController.php';
+            $controller = new MovingController($pdo);
+            $controller->getClientMovings();
+            break;
+
+        case $path === '/api/moving/status' && $method === 'PUT':
+            if (!$pdo) Response::error('Servicio no disponible', 503);
+            require_once __DIR__ . '/controllers/MovingController.php';
+            $controller = new MovingController($pdo);
+            $controller->updateMovingStatus();
+            break;
+
+        // ==================== ADMIN MUDANZAS/PROVEEDORES ====================
+        case $path === '/api/admin/providers' && $method === 'GET':
+            if (!$pdo) Response::error('Servicio no disponible', 503);
+            require_once __DIR__ . '/controllers/ProviderController.php';
+            $controller = new ProviderController($pdo);
+            $controller->listProviders();
+            break;
+
+        case $path === '/api/admin/providers/verification' && $method === 'PUT':
+            if (!$pdo) Response::error('Servicio no disponible', 503);
+            require_once __DIR__ . '/controllers/ProviderController.php';
+            $controller = new ProviderController($pdo);
+            $controller->updateVerificationStatus();
+            break;
+
+        case $path === '/api/admin/moving/requests' && $method === 'GET':
+            if (!$pdo) Response::error('Servicio no disponible', 503);
+            require_once __DIR__ . '/controllers/MovingController.php';
+            $controller = new MovingController($pdo);
+            $controller->getAllRequests();
+            break;
+
+        case $path === '/api/admin/moving/assign' && $method === 'POST':
+            if (!$pdo) Response::error('Servicio no disponible', 503);
+            require_once __DIR__ . '/controllers/MovingController.php';
+            $controller = new MovingController($pdo);
+            $controller->assignProvider();
+            break;
+
+        case $path === '/api/provider/search/location' && $method === 'GET':
+            if (!$pdo) Response::error('Servicio no disponible', 503);
+            require_once __DIR__ . '/controllers/ProviderController.php';
+            $controller = new ProviderController($pdo);
+            $controller->searchByLocation();
+            break;
+
         // ==================== DEFAULT ====================
         default:
             Response::error('Endpoint no encontrado: ' . $path, 404);
