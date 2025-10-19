@@ -28,6 +28,113 @@ class User {
         return $this->findByEmail($userData['email']);
     }
 
+    public function createWithClient($userData) {
+        try {
+            // Iniciar transacción
+            $this->pdo->beginTransaction();
+
+            // 1. Crear usuario (usando tu método existente)
+            $sql = "INSERT INTO usuarios (
+                uuid, nombre, apellido, email, telefono, password_hash, 
+                fecha_registro, estado, rol
+            ) VALUES (?, ?, ?, ?, ?, ?, NOW(), 'activo', 'cliente')";
+
+            $stmt = $this->pdo->prepare($sql);
+            $uuid = uniqid('user_', true);
+            
+            $stmt->execute([
+                $uuid,
+                $userData['nombre'],
+                $userData['apellido'],
+                $userData['email'],
+                $userData['telefono'] ?? null,
+                $userData['password_hash']
+            ]);
+
+            $userId = $this->pdo->lastInsertId();
+
+            // 2. Crear registro en clientes automáticamente
+            $sqlCliente = "INSERT INTO clientes (
+                usuario_id, nivel_confianza, total_mudanzas, mudanzas_completadas
+            ) VALUES (?, 1, 0, 0)";
+            
+            $stmtCliente = $this->pdo->prepare($sqlCliente);
+            $stmtCliente->execute([$userId]);
+
+            // Confirmar transacción
+            $this->pdo->commit();
+
+            return $this->findByEmail($userData['email']);
+
+        } catch (Exception $e) {
+            // Revertir transacción en caso de error
+            $this->pdo->rollBack();
+            throw new Exception("Error creando usuario y cliente: " . $e->getMessage());
+        }
+    }
+
+    // Método para asegurar que un cliente exista (para usuarios existentes)
+    public function ensureClientExists($userId) {
+        try {
+            // Verificar si el cliente ya existe
+            $sql = "SELECT id FROM clientes WHERE usuario_id = ?";
+            $stmt = $this->pdo->prepare($sql);
+            $stmt->execute([$userId]);
+            $cliente = $stmt->fetch(PDO::FETCH_ASSOC);
+            
+            if ($cliente) {
+                return $cliente['id'];
+            }
+            
+            // Si no existe, crear el cliente
+            $sql = "INSERT INTO clientes (usuario_id, nivel_confianza, total_mudanzas, mudanzas_completadas) 
+                    VALUES (?, 1, 0, 0)";
+            $stmt = $this->pdo->prepare($sql);
+            $stmt->execute([$userId]);
+            
+            return $this->pdo->lastInsertId();
+            
+        } catch (Exception $e) {
+            throw new Exception("Error creando/verificando cliente: " . $e->getMessage());
+        }
+    }
+
+    //Obtener estadísticas del cliente
+    public function getClientStatistics($userId) {
+        try {
+            // Asegurar que el cliente existe
+            $clienteId = $this->ensureClientExists($userId);
+            
+            $sql = "SELECT 
+                    c.total_mudanzas,
+                    c.mudanzas_completadas,
+                    c.nivel_confianza,
+                    c.fecha_ultima_mudanza,
+                    (SELECT COUNT(*) FROM solicitudes_mudanza WHERE cliente_id = c.id AND estado = 'pendiente') as solicitudes_pendientes,
+                    (SELECT COUNT(*) FROM solicitudes_mudanza WHERE cliente_id = c.id AND estado = 'asignada') as solicitudes_asignadas,
+                    (SELECT COUNT(*) FROM solicitudes_mudanza WHERE cliente_id = c.id AND estado = 'completada') as solicitudes_completadas
+                FROM clientes c 
+                WHERE c.id = ?";
+            
+            $stmt = $this->pdo->prepare($sql);
+            $stmt->execute([$clienteId]);
+            return $stmt->fetch(PDO::FETCH_ASSOC);
+            
+        } catch (Exception $e) {
+            throw new Exception("Error obteniendo estadísticas: " . $e->getMessage());
+        }
+    }
+
+    // Método para obtener el ID del cliente por ID de usuario
+        public function getClienteIdByUserId($userId) {
+        $sql = "SELECT id FROM clientes WHERE usuario_id = ?";
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute([$userId]);
+        $result = $stmt->fetch(PDO::FETCH_ASSOC);
+        
+        return $result ? $result['id'] : null;
+    }
+
     // Buscar por email
     public function findByEmail($email) {
         $sql = "SELECT * FROM usuarios WHERE email = ? AND estado = 'activo'";

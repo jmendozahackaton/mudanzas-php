@@ -15,76 +15,74 @@ class MovingController {
         $this->userModel = new User($pdo);
     }
 
-    // Crear solicitud de mudanza
     public function createRequest() {
         $user = AuthMiddleware::authenticate();
         $input = json_decode(file_get_contents('php://input'), true);
 
-        // Validaciones básicas
-        $required = ['direccion_origen', 'direccion_destino', 'fecha_programada'];
-        foreach ($required as $field) {
-            if (empty($input[$field])) {
-                Response::error("El campo $field es requerido", 400);
-            }
+        // Validaciones
+        if (empty($input['direccion_origen']) || empty($input['direccion_destino'])) {
+            Response::error('Dirección de origen y destino son requeridas', 400);
         }
 
-        // Obtener cliente_id del usuario
-        $cliente = $this->userModel->getClienteByUserId($user['user_id']);
-        if (!$cliente) {
-            Response::error('Cliente no encontrado', 404);
+        if (empty($input['fecha_programada'])) {
+            Response::error('Fecha programada es requerida', 400);
         }
 
-        $requestData = [
-            'cliente_id' => $cliente['id'],
-            'direccion_origen' => $input['direccion_origen'],
-            'direccion_destino' => $input['direccion_destino'],
-            'lat_origen' => $input['lat_origen'] ?? null,
-            'lng_origen' => $input['lng_origen'] ?? null,
-            'lat_destino' => $input['lat_destino'] ?? null,
-            'lng_destino' => $input['lng_destino'] ?? null,
-            'descripcion_items' => $input['descripcion_items'] ?? '',
-            'tipo_items' => $input['tipo_items'] ?? [],
-            'volumen_estimado' => $input['volumen_estimado'] ?? 0,
-            'servicios_adicionales' => $input['servicios_adicionales'] ?? [],
-            'urgencia' => $input['urgencia'] ?? 'normal',
-            'fecha_programada' => $input['fecha_programada'],
-            'cotizacion_estimada' => $input['cotizacion_estimada'] ?? 0,
-            'distancia_estimada' => $input['distancia_estimada'] ?? 0,
-            'tiempo_estimado' => $input['tiempo_estimado'] ?? 0
-        ];
+        try {
+            // ✅ ASEGURAR QUE EL CLIENTE EXISTA
+            $clienteId = $this->userModel->ensureClientExists($user['user_id']);
+            
+            // Preparar datos para la solicitud
+            $requestData = [
+                'cliente_id' => $clienteId,
+                'direccion_origen' => $input['direccion_origen'],
+                'direccion_destino' => $input['direccion_destino'],
+                'lat_origen' => $input['lat_origen'] ?? null,
+                'lng_origen' => $input['lng_origen'] ?? null,
+                'lat_destino' => $input['lat_destino'] ?? null,
+                'lng_destino' => $input['lng_destino'] ?? null,
+                'descripcion_items' => $input['descripcion_items'] ?? '',
+                'tipo_items' => $input['tipo_items'] ?? [],
+                'volumen_estimado' => $input['volumen_estimado'] ?? 0,
+                'servicios_adicionales' => $input['servicios_adicionales'] ?? [],
+                'urgencia' => $input['urgencia'] ?? 'normal',
+                'fecha_programada' => $input['fecha_programada'],
+                'cotizacion_estimada' => $input['cotizacion_estimada'] ?? 0,
+                'distancia_estimada' => $input['distancia_estimada'] ?? 0,
+                'tiempo_estimado' => $input['tiempo_estimado'] ?? 0
+            ];
 
-        $solicitud = $this->movingModel->createRequest($requestData);
-
-        Response::success('Solicitud de mudanza creada exitosamente', [
-            'solicitud' => $solicitud
-        ]);
+            // Crear la solicitud
+            $solicitud = $this->movingModel->createRequest($requestData);
+            
+            Response::success('Solicitud de mudanza creada exitosamente', [
+                'solicitud' => $solicitud
+            ]);
+            
+        } catch (Exception $e) {
+            Response::error($e->getMessage(), 500);
+        }
     }
 
     // Obtener solicitudes del cliente
     public function getClientRequests() {
         $user = AuthMiddleware::authenticate();
         
-        $page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
-        $limit = isset($_GET['limit']) ? (int)$_GET['limit'] : 10;
-
-        // Obtener cliente_id del usuario
-        $cliente = $this->userModel->getClienteByUserId($user['user_id']);
-        if (!$cliente) {
-            Response::error('Cliente no encontrado', 404);
+        try {
+            $clienteId = $this->userModel->ensureClientExists($user['user_id']);
+            
+            $page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
+            $limit = isset($_GET['limit']) ? (int)$_GET['limit'] : 10;
+            
+            $requests = $this->movingModel->getClientRequests($clienteId, $page, $limit);
+            
+            Response::success('Solicitudes obtenidas', [
+                'solicitudes' => $requests
+            ]);
+            
+        } catch (Exception $e) {
+            Response::error($e->getMessage(), 500);
         }
-
-        $solicitudes = $this->movingModel->getClientRequests($cliente['id'], $page, $limit);
-        $total = $this->movingModel->countRequestsByStatus();
-
-        Response::success('Solicitudes obtenidas', [
-            'solicitudes' => $solicitudes,
-            'pagination' => [
-                'page' => $page,
-                'limit' => $limit,
-                'total' => (int)$total,
-                'pages' => ceil($total / $limit)
-            ]
-        ]);
     }
 
     // Obtener todas las solicitudes (admin)

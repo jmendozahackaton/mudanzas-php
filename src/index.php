@@ -116,6 +116,21 @@ try {
             $controller->updateUserProfile();
             break;
 
+        // ==================== CLIENTE ENDPOINTS ====================
+        case $path === '/api/client/ensure' && $method === 'POST':
+            if (!$pdo) Response::error('Servicio no disponible', 503);
+            require_once __DIR__ . '/controllers/UserController.php';
+            $controller = new UserController($pdo);
+            $controller->ensureClient();
+            break;
+
+        case $path === '/api/client/statistics' && $method === 'GET':
+            if (!$pdo) Response::error('Servicio no disponible', 503);
+            require_once __DIR__ . '/controllers/UserController.php';
+            $controller = new UserController($pdo);
+            $controller->getClientStatistics();
+            break;
+
         // ==================== PROVEEDOR ENDPOINTS ====================
         case $path === '/api/provider/register' && $method === 'POST':
             if (!$pdo) Response::error('Servicio no disponible', 503);

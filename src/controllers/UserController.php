@@ -30,7 +30,7 @@ class UserController {
             Response::error('El email ya está registrado', 409);
         }
 
-        // Crear usuario
+        // Crear usuario CON CLIENTE
         $userData = [
             'nombre' => $input['nombre'],
             'apellido' => $input['apellido'],
@@ -39,7 +39,8 @@ class UserController {
             'password_hash' => Password::hash($input['password'])
         ];
 
-        $user = $this->userModel->create($userData);
+        // ✅ USAR EL NUEVO MÉTODO QUE CREA USUARIO + CLIENTE
+        $user = $this->userModel->createWithClient($userData);
 
         // Generar JWT
         $token = JWT::generate([
@@ -58,6 +59,36 @@ class UserController {
             ],
             'token' => $token
         ]);
+    }
+
+    // ✅ AGREGAR NUEVO MÉTODO para asegurar cliente
+    public function ensureClient() {
+        $user = AuthMiddleware::authenticate();
+        
+        try {
+            $clienteId = $this->userModel->ensureClientExists($user['user_id']);
+            
+            Response::success('Cliente verificado/creado exitosamente', [
+                'cliente_id' => $clienteId
+            ]);
+            
+        } catch (Exception $e) {
+            Response::error($e->getMessage(), 500);
+        }
+    }
+
+    // ✅ AGREGAR MÉTODO para obtener estadísticas del cliente
+    public function getClientStatistics() {
+        $user = AuthMiddleware::authenticate();
+        
+        try {
+            $stats = $this->userModel->getClientStatistics($user['user_id']);
+            Response::success('Estadísticas obtenidas', [
+                'estadisticas' => $stats
+            ]);
+        } catch (Exception $e) {
+            Response::error($e->getMessage(), 500);
+        }
     }
 
     // 2. Login de Usuarios
