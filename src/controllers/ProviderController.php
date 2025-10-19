@@ -242,5 +242,51 @@ class ProviderController {
             'radio' => $radius
         ]);
     }
+    
+    // Convertir usuario a proveedor
+    public function convertToProvider() {
+        $user = AuthMiddleware::authenticate();
+        $input = json_decode(file_get_contents('php://input'), true);
+
+        // Verificar si ya es proveedor
+        $existingProvider = $this->providerModel->getByUserId($user['user_id']);
+        if ($existingProvider) {
+            Response::error('El usuario ya es proveedor', 409);
+        }
+
+        // Validar campos requeridos
+        $required = [
+            'tipo_cuenta', 'documento_identidad', 
+            'licencia_conducir', 'categoria_licencia'
+        ];
+        foreach ($required as $field) {
+            if (empty($input[$field])) {
+                Response::error("El campo $field es requerido", 400);
+            }
+        }
+
+        // Crear registro de proveedor
+        $providerData = [
+            'user_id' => $user['user_id'],
+            'tipo_cuenta' => $input['tipo_cuenta'],
+            'razon_social' => $input['razon_social'] ?? null,
+            'documento_identidad' => $input['documento_identidad'],
+            'licencia_conducir' => $input['licencia_conducir'],
+            'categoria_licencia' => $input['categoria_licencia'],
+            'seguro_vehicular' => $input['seguro_vehicular'] ?? null,
+            'radio_servicio' => $input['radio_servicio'] ?? 10,
+            'tarifa_base' => $input['tarifa_base'] ?? 0,
+            'tarifa_por_km' => $input['tarifa_por_km'] ?? 0,
+            'tarifa_hora' => $input['tarifa_hora'] ?? 0,
+            'tarifa_minima' => $input['tarifa_minima'] ?? 0,
+            'metodos_pago_aceptados' => $input['metodos_pago_aceptados'] ?? []
+        ];
+
+        $proveedor = $this->providerModel->createForExistingUser($providerData);
+
+        Response::success('Usuario convertido a proveedor exitosamente', [
+            'proveedor' => $proveedor
+        ]);
+    }
 }
 ?>

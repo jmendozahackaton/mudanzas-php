@@ -124,6 +124,13 @@ try {
             $controller->register();
             break;
 
+        case $path === '/api/provider/convert' && $method === 'POST':
+            if (!$pdo) Response::error('Servicio no disponible', 503);
+            require_once __DIR__ . '/controllers/ProviderController.php';
+            $controller = new ProviderController($pdo);
+            $controller->convertToProvider();
+            break;
+
         case $path === '/api/provider/profile' && $method === 'GET':
             if (!$pdo) Response::error('Servicio no disponible', 503);
             require_once __DIR__ . '/controllers/ProviderController.php';

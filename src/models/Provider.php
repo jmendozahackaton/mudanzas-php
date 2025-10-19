@@ -248,5 +248,40 @@ class Provider {
         $stmt->execute([$providerId]);
         return $stmt->fetch(PDO::FETCH_ASSOC);
     }
+    
+    // Crear proveedor para usuario existente
+    public function createForExistingUser($providerData) {
+        $sql = "INSERT INTO proveedores (
+            usuario_id, tipo_cuenta, razon_social, documento_identidad,
+            licencia_conducir, categoria_licencia, seguro_vehicular,
+            estado_verificacion, radio_servicio, tarifa_base, tarifa_por_km,
+            tarifa_hora, tarifa_minima, metodos_pago_aceptados
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, 'pendiente', ?, ?, ?, ?, ?, ?)";
+
+        $stmt = $this->pdo->prepare($sql);
+        
+        $stmt->execute([
+            $providerData['user_id'],
+            $providerData['tipo_cuenta'],
+            $providerData['razon_social'] ?? null,
+            $providerData['documento_identidad'],
+            $providerData['licencia_conducir'],
+            $providerData['categoria_licencia'],
+            $providerData['seguro_vehicular'] ?? null,
+            $providerData['radio_servicio'] ?? 10,
+            $providerData['tarifa_base'] ?? 0,
+            $providerData['tarifa_por_km'] ?? 0,
+            $providerData['tarifa_hora'] ?? 0,
+            $providerData['tarifa_minima'] ?? 0,
+            json_encode($providerData['metodos_pago_aceptados'] ?? [])
+        ]);
+
+        // Actualizar rol del usuario
+        $updateUserSql = "UPDATE usuarios SET rol = 'proveedor' WHERE id = ?";
+        $updateStmt = $this->pdo->prepare($updateUserSql);
+        $updateStmt->execute([$providerData['user_id']]);
+
+        return $this->getByUserId($providerData['user_id']);
+    }
 }
 ?>
