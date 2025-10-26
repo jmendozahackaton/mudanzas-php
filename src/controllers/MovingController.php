@@ -111,7 +111,7 @@ class MovingController {
     public function assignProvider() {
         $admin = AdminMiddleware::check();
         $input = json_decode(file_get_contents('php://input'), true);
-
+        error_log("📦 Assign Provider - Input recibido: " . json_encode($input));
         if (empty($input['solicitud_id']) || empty($input['proveedor_id'])) {
             Response::error('solicitud_id y proveedor_id son requeridos', 400);
         }
@@ -119,10 +119,12 @@ class MovingController {
         // Verificar que la solicitud existe y está pendiente
         $solicitud = $this->movingModel->getRequestById($input['solicitud_id']);
         if (!$solicitud) {
+            error_log("❌ Solicitud no encontrada: " . $input['solicitud_id']);
             Response::error('Solicitud no encontrada', 404);
         }
-
+        error_log("📦 Solicitud encontrada - Estado: " . $solicitud['estado']);
         if ($solicitud['estado'] !== 'pendiente') {
+            error_log("❌ Solicitud ya asignada - Estado actual: " . $solicitud['estado']);
             Response::error('La solicitud ya ha sido asignada', 400);
         }
 
@@ -135,8 +137,13 @@ class MovingController {
             'costo_total' => $input['costo_total'] ?? $solicitud['cotizacion_estimada'],
             'comision_plataforma' => $input['comision_plataforma'] ?? 0
         ];
-
+        error_log("📦 Datos para crear mudanza: " . json_encode($movingData));
         $mudanza = $this->movingModel->createMoving($movingData);
+        error_log("📦 Resultado de createMoving: " . json_encode($mudanza));
+        if (!$mudanza) {
+            error_log("❌ createMoving retornó false");
+            Response::error('Error al crear la mudanza en la base de datos', 500);
+        }
 
         Response::success('Proveedor asignado exitosamente', [
             'mudanza' => $mudanza

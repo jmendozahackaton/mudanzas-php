@@ -163,28 +163,71 @@ class Moving {
 
     // Crear mudanza a partir de solicitud
     public function createMoving($movingData) {
-        $sql = "INSERT INTO mudanzas (
-            solicitud_id, cliente_id, proveedor_id, codigo_mudanza,
-            estado, fecha_solicitud, costo_base, costo_total, comision_plataforma
-        ) VALUES (?, ?, ?, ?, 'asignada', NOW(), ?, ?, ?)";
+        try {
+            $sql = "INSERT INTO mudanzas (
+                solicitud_id, cliente_id, proveedor_id, codigo_mudanza,
+                estado, fecha_solicitud, costo_base, costo_total, comision_plataforma
+            ) VALUES (?, ?, ?, ?, 'asignada', NOW(), ?, ?, ?)";
 
-        $stmt = $this->pdo->prepare($sql);
-        $codigo = 'MOV-' . date('Ymd') . '-' . uniqid();
-        
-        $stmt->execute([
-            $movingData['solicitud_id'],
-            $movingData['cliente_id'],
-            $movingData['proveedor_id'],
-            $codigo,
-            $movingData['costo_base'],
-            $movingData['costo_total'],
-            $movingData['comision_plataforma']
-        ]);
+            $stmt = $this->pdo->prepare($sql);
+            $codigo = 'MOV-' . date('Ymd') . '-' . uniqid();
+            
+            $success = $stmt->execute([
+                $movingData['solicitud_id'],
+                $movingData['cliente_id'],
+                $movingData['proveedor_id'],
+                $codigo,
+                $movingData['costo_base'],
+                $movingData['costo_total'],
+                $movingData['comision_plataforma']
+            ]);
 
-        // Actualizar estado de la solicitud
-        $this->updateRequestStatus($movingData['solicitud_id'], 'asignada');
+            if (!$success) {
+                error_log("❌ Error en execute: " . implode(", ", $stmt->errorInfo()));
+                return false;
+            }
 
-        return $this->getMovingById($this->pdo->lastInsertId());
+            // Obtener el ID de forma más robusta
+            $movingId = $this->pdo->lastInsertId();
+            
+            if (!$movingId || $movingId == 0) {
+                error_log("❌ lastInsertId retornó: " . $movingId);
+                
+                // Intentar obtener el ID de otra forma
+                $sql = "SELECT id FROM mudanzas WHERE solicitud_id = ? AND proveedor_id = ? ORDER BY id DESC LIMIT 1";
+                $stmt = $this->pdo->prepare($sql);
+                $stmt->execute([$movingData['solicitud_id'], $movingData['proveedor_id']]);
+                $result = $stmt->fetch(PDO::FETCH_ASSOC);
+                
+                if ($result) {
+                    $movingId = $result['id'];
+                } else {
+                    error_log("❌ No se pudo obtener el ID de la mudanza insertada");
+                    return false;
+                }
+            }
+
+            // Actualizar estado de la solicitud
+            $updateSuccess = $this->updateRequestStatus($movingData['solicitud_id'], 'asignada');
+            if (!$updateSuccess) {
+                error_log("⚠️ No se pudo actualizar el estado de la solicitud");
+            }
+
+            // Obtener la mudanza creada
+            $mudanza = $this->getMovingById($movingId);
+            
+            if (!$mudanza) {
+                error_log("❌ No se pudo obtener la mudanza con ID: " . $movingId);
+                return false;
+            }
+
+            error_log("✅ Mudanza creada exitosamente - ID: " . $movingId);
+            return $mudanza;
+            
+        } catch (Exception $e) {
+            error_log("❌ Excepción en createMoving: " . $e->getMessage());
+            return false;
+        }
     }
 
     // Obtener mudanza por ID
