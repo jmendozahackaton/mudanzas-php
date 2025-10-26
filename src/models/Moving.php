@@ -320,6 +320,17 @@ class Moving {
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
+    // Contar mudanzas de un proveedor
+    public function countProviderMovings($proveedorId) {
+        $sql = "SELECT COUNT(*) as total FROM mudanzas WHERE proveedor_id = ?";
+        
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute([$proveedorId]);
+        $result = $stmt->fetch(PDO::FETCH_ASSOC);
+        
+        return $result['total'];
+    }
+
     // Contar solicitudes por estado
     public function countRequestsByStatus($estado = null) {
         $sql = "SELECT COUNT(*) as total FROM solicitudes_mudanza";

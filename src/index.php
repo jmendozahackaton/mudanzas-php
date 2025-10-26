@@ -210,6 +210,13 @@ try {
             $controller->updateMovingStatus();
             break;
 
+        case $path === '/api/moving/provider-movings' && $method === 'GET':
+            if (!$pdo) Response::error('Servicio no disponible', 503);
+            require_once __DIR__ . '/controllers/MovingController.php';
+            $controller = new MovingController($pdo);
+            $controller->getProviderMovings();
+            break;
+
         // ==================== ADMIN MUDANZAS/PROVEEDORES ====================
         case $path === '/api/admin/providers' && $method === 'GET':
             if (!$pdo) Response::error('Servicio no disponible', 503);

@@ -177,6 +177,33 @@ class MovingController {
         ]);
     }
 
+    // Obtener mudanzas del proveedor
+    public function getProviderMovings() {
+        $user = AuthMiddleware::authenticate();
+        
+        $page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
+        $limit = isset($_GET['limit']) ? (int)$_GET['limit'] : 10;
+
+        // Obtener proveedor_id del usuario
+        $proveedor = $this->userModel->getProveedorByUserId($user['user_id']);
+        if (!$proveedor) {
+            Response::error('Proveedor no encontrado', 404);
+        }
+
+        $mudanzas = $this->movingModel->getProviderMovings($proveedor['id'], $page, $limit);
+        $total = $this->movingModel->countProviderMovings($proveedor['id']);
+
+        Response::success('Mudanzas obtenidas', [
+            'mudanzas' => $mudanzas,
+            'pagination' => [
+                'page' => $page,
+                'limit' => $limit,
+                'total' => (int)$total,
+                'pages' => ceil($total / $limit)
+            ]
+        ]);
+    }
+
     // Actualizar estado de mudanza
     public function updateMovingStatus() {
         $user = AuthMiddleware::authenticate();
